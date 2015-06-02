@@ -53,29 +53,22 @@ function field_permissions_list($field_label = '') {
  *   An array of permission information, suitable for use in hook_permission().
  */
 function field_permissions_list_field_permissions($field, $label = NULL) {
-  $description = '';
-
-  // If there is no preferred label, construct one from all the instance
-  // labels.
   if (!isset($label)) {
-    $labels = array();
-    foreach ($field['bundles'] as $entity_type => $bundles) {
-      foreach ($bundles as $bundle_name) {
-        $instance = field_info_instance($entity_type, $field['field_name'], $bundle_name);
-        $labels[] = $instance['label'];
-      }
+    $label = $field['field_name'];
+  }
+  $instances = array();
+  foreach ($field['bundles'] as $entity_type => $bundles) {
+    foreach ($bundles as $bundle_name) {
+      $instance = field_info_instance($entity_type, $field['field_name'], $bundle_name);
+      $entity = entity_get_info($entity_type);
+      $instance_desc_tokens = array(
+        $entity['label'],
+        $entity['bundles'][$bundle_name]['label'],
+        $instance['label'],
+      );
+      $instances[] = '"' . implode(':', $instance_desc_tokens) . '"';
     }
-    // If all the instances have the same label, just use that. Otherwise, use
-    // the field name (with the full list of instance labels as the permission
-    // description).
-    $labels = array_unique($labels);
-    if (count($labels) == 1) {
-      $label = array_shift($labels);
-    }
-    else {
-      $label = $field['field_name'];
-      $description = t('This field appears as: %instances', array('%instances' => implode(', ', $labels)));
-    }
+    $description = t('This field appears as: %instances.', array('%instances' => implode(', ', $instances)));
   }
 
   $permissions = array();
